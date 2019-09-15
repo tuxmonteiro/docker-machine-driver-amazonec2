@@ -241,6 +241,7 @@
     "github.com/docker/machine/libmachine/mcnutils",
     "github.com/docker/machine/libmachine/ssh",
     "github.com/docker/machine/libmachine/state",
+    "github.com/docker/machine/version",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
   ]
