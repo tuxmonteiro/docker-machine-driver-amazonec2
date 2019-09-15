@@ -44,7 +44,7 @@ import (
 )
 
 const (
-	driverName                  = "amazonec2"
+	driverName                  = "awsec2"
 	ipRange                     = "0.0.0.0/0"
 	machineSecurityGroupName    = "docker-machine"
 	defaultAmiId                = "ami-c60b90d1"
@@ -69,12 +69,12 @@ const (
 var (
 	dockerPort                           = 2376
 	swarmPort                            = 3376
-	errorNoPrivateSSHKey                 = errors.New("using --amazonec2-keypair-name also requires --amazonec2-ssh-keypath")
-	errorMissingCredentials              = errors.New("amazonec2 driver requires AWS credentials configured with the --amazonec2-access-key and --amazonec2-secret-key options, environment variables, ~/.aws/credentials, or an instance role")
-	errorNoVPCIdFound                    = errors.New("amazonec2 driver requires either the --amazonec2-subnet-id or --amazonec2-vpc-id option or an AWS Account with a default vpc-id")
-	errorNoSubnetsFound                  = errors.New("The desired subnet could not be located in this region. Is '--amazonec2-subnet-id' or AWS_SUBNET_ID configured correctly?")
-	errorDisableSSLWithoutCustomEndpoint = errors.New("using --amazonec2-insecure-transport also requires --amazonec2-endpoint")
-	errorReadingUserData                 = errors.New("unable to read --amazonec2-userdata file")
+	errorNoPrivateSSHKey                 = errors.New("using --awsec2-keypair-name also requires --awsec2-ssh-keypath")
+	errorMissingCredentials              = errors.New("awsec2 driver requires AWS credentials configured with the --awsec2-access-key and --awsec2-secret-key options, environment variables, ~/.aws/credentials, or an instance role")
+	errorNoVPCIdFound                    = errors.New("awsec2 driver requires either the --awsec2-subnet-id or --awsec2-vpc-id option or an AWS Account with a default vpc-id")
+	errorNoSubnetsFound                  = errors.New("the desired subnet could not be located in this region (is '--awsec2-subnet-id' or AWS_SUBNET_ID configured correctly?)")
+	errorDisableSSLWithoutCustomEndpoint = errors.New("using --awsec2-insecure-transport also requires --awsec2-endpoint")
+	errorReadingUserData                 = errors.New("unable to read --awsec2-userdata file")
 )
 
 type Driver struct {
@@ -139,172 +139,172 @@ type clientFactory interface {
 func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 	return []mcnflag.Flag{
 		mcnflag.StringFlag{
-			Name:   "amazonec2-access-key",
+			Name:   "awsec2-access-key",
 			Usage:  "AWS Access Key",
 			EnvVar: "AWS_ACCESS_KEY_ID",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-secret-key",
+			Name:   "awsec2-secret-key",
 			Usage:  "AWS Secret Key",
 			EnvVar: "AWS_SECRET_ACCESS_KEY",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-session-token",
+			Name:   "awsec2-session-token",
 			Usage:  "AWS Session Token",
 			EnvVar: "AWS_SESSION_TOKEN",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-ami",
+			Name:   "awsec2-ami",
 			Usage:  "AWS machine image",
 			EnvVar: "AWS_AMI",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-region",
+			Name:   "awsec2-region",
 			Usage:  "AWS region",
 			Value:  defaultRegion,
 			EnvVar: "AWS_DEFAULT_REGION",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-vpc-id",
+			Name:   "awsec2-vpc-id",
 			Usage:  "AWS VPC id",
 			EnvVar: "AWS_VPC_ID",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-zone",
+			Name:   "awsec2-zone",
 			Usage:  "AWS zone for instance (i.e. a,b,c,d,e)",
 			Value:  defaultZone,
 			EnvVar: "AWS_ZONE",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-subnet-id",
+			Name:   "awsec2-subnet-id",
 			Usage:  "AWS VPC subnet id",
 			EnvVar: "AWS_SUBNET_ID",
 		},
 		mcnflag.BoolFlag{
-			Name:   "amazonec2-security-group-readonly",
+			Name:   "awsec2-security-group-readonly",
 			Usage:  "Skip adding default rules to security groups",
 			EnvVar: "AWS_SECURITY_GROUP_READONLY",
 		},
 		mcnflag.StringSliceFlag{
-			Name:   "amazonec2-security-group",
+			Name:   "awsec2-security-group",
 			Usage:  "AWS VPC security group",
 			Value:  []string{defaultSecurityGroup},
 			EnvVar: "AWS_SECURITY_GROUP",
 		},
 		mcnflag.StringSliceFlag{
-			Name:  "amazonec2-open-port",
+			Name:  "awsec2-open-port",
 			Usage: "Make the specified port number accessible from the Internet",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-tags",
+			Name:   "awsec2-tags",
 			Usage:  "AWS Tags (e.g. key1,value1,key2,value2)",
 			EnvVar: "AWS_TAGS",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-instance-type",
+			Name:   "awsec2-instance-type",
 			Usage:  "AWS instance type",
 			Value:  defaultInstanceType,
 			EnvVar: "AWS_INSTANCE_TYPE",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-device-name",
+			Name:   "awsec2-device-name",
 			Usage:  "AWS root device name",
 			Value:  defaultDeviceName,
 			EnvVar: "AWS_DEVICE_NAME",
 		},
 		mcnflag.IntFlag{
-			Name:   "amazonec2-root-size",
+			Name:   "awsec2-root-size",
 			Usage:  "AWS root disk size (in GB)",
 			Value:  defaultRootSize,
 			EnvVar: "AWS_ROOT_SIZE",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-volume-type",
+			Name:   "awsec2-volume-type",
 			Usage:  "Amazon EBS volume type",
 			Value:  defaultVolumeType,
 			EnvVar: "AWS_VOLUME_TYPE",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-iam-instance-profile",
+			Name:   "awsec2-iam-instance-profile",
 			Usage:  "AWS IAM Instance Profile",
 			EnvVar: "AWS_INSTANCE_PROFILE",
 		},
 		mcnflag.IntFlag{
-			Name:   "amazonec2-ssh-port",
+			Name:   "awsec2-ssh-port",
 			Usage:  "SSH port",
 			Value:  defaultSSHPort,
 			EnvVar: "AWS_SSH_PORT",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-ssh-user",
+			Name:   "awsec2-ssh-user",
 			Usage:  "SSH username",
 			Value:  defaultSSHUser,
 			EnvVar: "AWS_SSH_USER",
 		},
 		mcnflag.BoolFlag{
-			Name:  "amazonec2-request-spot-instance",
+			Name:  "awsec2-request-spot-instance",
 			Usage: "Set this flag to request spot instance",
 		},
 		mcnflag.StringFlag{
-			Name:  "amazonec2-spot-price",
+			Name:  "awsec2-spot-price",
 			Usage: "AWS spot instance bid price (in dollar)",
 			Value: defaultSpotPrice,
 		},
 		mcnflag.IntFlag{
-			Name:  "amazonec2-block-duration-minutes",
+			Name:  "awsec2-block-duration-minutes",
 			Usage: "AWS spot instance duration in minutes (60, 120, 180, 240, 300, or 360)",
 			Value: defaultBlockDurationMinutes,
 		},
 		mcnflag.BoolFlag{
-			Name:  "amazonec2-private-address-only",
+			Name:  "awsec2-private-address-only",
 			Usage: "Only use a private IP address",
 		},
 		mcnflag.BoolFlag{
-			Name:  "amazonec2-use-private-address",
+			Name:  "awsec2-use-private-address",
 			Usage: "Force the usage of private IP address",
 		},
 		mcnflag.BoolFlag{
-			Name:  "amazonec2-monitoring",
+			Name:  "awsec2-monitoring",
 			Usage: "Set this flag to enable CloudWatch monitoring",
 		},
 		mcnflag.BoolFlag{
-			Name:  "amazonec2-use-ebs-optimized-instance",
+			Name:  "awsec2-use-ebs-optimized-instance",
 			Usage: "Create an EBS optimized instance",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-ssh-keypath",
+			Name:   "awsec2-ssh-keypath",
 			Usage:  "SSH Key for Instance",
 			EnvVar: "AWS_SSH_KEYPATH",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-keypair-name",
-			Usage:  "AWS keypair to use; requires --amazonec2-ssh-keypath",
+			Name:   "awsec2-keypair-name",
+			Usage:  "AWS keypair to use; requires --awsec2-ssh-keypath",
 			EnvVar: "AWS_KEYPAIR_NAME",
 		},
 		mcnflag.IntFlag{
-			Name:  "amazonec2-retries",
+			Name:  "awsec2-retries",
 			Usage: "Set retry count for recoverable failures (use -1 to disable)",
 			Value: 5,
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-endpoint",
+			Name:   "awsec2-endpoint",
 			Usage:  "Optional endpoint URL (hostname only or fully qualified URI)",
 			Value:  "",
 			EnvVar: "AWS_ENDPOINT",
 		},
 		mcnflag.BoolFlag{
-			Name:   "amazonec2-insecure-transport",
+			Name:   "awsec2-insecure-transport",
 			Usage:  "Disable SSL when sending requests",
 			EnvVar: "AWS_INSECURE_TRANSPORT",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-userdata",
+			Name:   "awsec2-userdata",
 			Usage:  "path to file with cloud-init user data",
 			EnvVar: "AWS_USERDATA",
 		},
 		mcnflag.StringFlag{
-			Name:   "amazonec2-userdata-base64",
-			Usage:  "Cloud-init User data Base64 (ignored if amazonec2-userdata is defined)",
+			Name:   "awsec2-userdata-base64",
+			Usage:  "Cloud-init User data Base64 (ignored if awsec2-userdata is defined)",
 			EnvVar: "AWS_USERDATA_BASE64",
 		},
 	}
@@ -360,54 +360,54 @@ func (d *Driver) getClient() Ec2Client {
 }
 
 func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
-	d.Endpoint = flags.String("amazonec2-endpoint")
+	d.Endpoint = flags.String("awsec2-endpoint")
 
-	region, err := validateAwsRegion(flags.String("amazonec2-region"))
+	region, err := validateAwsRegion(flags.String("awsec2-region"))
 	if err != nil && d.Endpoint == "" {
 		return err
 	}
 
-	image := flags.String("amazonec2-ami")
+	image := flags.String("awsec2-ami")
 	if len(image) == 0 {
 		image = regionDetails[region].AmiId
 	}
 
-	d.AccessKey = flags.String("amazonec2-access-key")
-	d.SecretKey = flags.String("amazonec2-secret-key")
-	d.SessionToken = flags.String("amazonec2-session-token")
+	d.AccessKey = flags.String("awsec2-access-key")
+	d.SecretKey = flags.String("awsec2-secret-key")
+	d.SessionToken = flags.String("awsec2-session-token")
 	d.Region = region
 	d.AMI = image
-	d.RequestSpotInstance = flags.Bool("amazonec2-request-spot-instance")
-	d.SpotPrice = flags.String("amazonec2-spot-price")
-	d.BlockDurationMinutes = int64(flags.Int("amazonec2-block-duration-minutes"))
-	d.InstanceType = flags.String("amazonec2-instance-type")
-	d.VpcId = flags.String("amazonec2-vpc-id")
-	d.SubnetId = flags.String("amazonec2-subnet-id")
-	d.SecurityGroupNames = flags.StringSlice("amazonec2-security-group")
-	d.SecurityGroupReadOnly = flags.Bool("amazonec2-security-group-readonly")
-	d.Tags = flags.String("amazonec2-tags")
-	zone := flags.String("amazonec2-zone")
+	d.RequestSpotInstance = flags.Bool("awsec2-request-spot-instance")
+	d.SpotPrice = flags.String("awsec2-spot-price")
+	d.BlockDurationMinutes = int64(flags.Int("awsec2-block-duration-minutes"))
+	d.InstanceType = flags.String("awsec2-instance-type")
+	d.VpcId = flags.String("awsec2-vpc-id")
+	d.SubnetId = flags.String("awsec2-subnet-id")
+	d.SecurityGroupNames = flags.StringSlice("awsec2-security-group")
+	d.SecurityGroupReadOnly = flags.Bool("awsec2-security-group-readonly")
+	d.Tags = flags.String("awsec2-tags")
+	zone := flags.String("awsec2-zone")
 	d.Zone = zone[:]
-	d.DeviceName = flags.String("amazonec2-device-name")
-	d.RootSize = int64(flags.Int("amazonec2-root-size"))
-	d.VolumeType = flags.String("amazonec2-volume-type")
-	d.IamInstanceProfile = flags.String("amazonec2-iam-instance-profile")
-	d.SSHUser = flags.String("amazonec2-ssh-user")
-	d.SSHPort = flags.Int("amazonec2-ssh-port")
-	d.PrivateIPOnly = flags.Bool("amazonec2-private-address-only")
-	d.UsePrivateIP = flags.Bool("amazonec2-use-private-address")
-	d.Monitoring = flags.Bool("amazonec2-monitoring")
-	d.UseEbsOptimizedInstance = flags.Bool("amazonec2-use-ebs-optimized-instance")
-	d.SSHPrivateKeyPath = flags.String("amazonec2-ssh-keypath")
-	d.KeyName = flags.String("amazonec2-keypair-name")
-	d.ExistingKey = flags.String("amazonec2-keypair-name") != ""
+	d.DeviceName = flags.String("awsec2-device-name")
+	d.RootSize = int64(flags.Int("awsec2-root-size"))
+	d.VolumeType = flags.String("awsec2-volume-type")
+	d.IamInstanceProfile = flags.String("awsec2-iam-instance-profile")
+	d.SSHUser = flags.String("awsec2-ssh-user")
+	d.SSHPort = flags.Int("awsec2-ssh-port")
+	d.PrivateIPOnly = flags.Bool("awsec2-private-address-only")
+	d.UsePrivateIP = flags.Bool("awsec2-use-private-address")
+	d.Monitoring = flags.Bool("awsec2-monitoring")
+	d.UseEbsOptimizedInstance = flags.Bool("awsec2-use-ebs-optimized-instance")
+	d.SSHPrivateKeyPath = flags.String("awsec2-ssh-keypath")
+	d.KeyName = flags.String("awsec2-keypair-name")
+	d.ExistingKey = flags.String("awsec2-keypair-name") != ""
 	d.SetSwarmConfigFromFlags(flags)
-	d.RetryCount = flags.Int("amazonec2-retries")
-	d.OpenPorts = flags.StringSlice("amazonec2-open-port")
-	d.UserDataFile = flags.String("amazonec2-userdata")
-	d.UserData = flags.String("amazonec2-userdata-base64")
+	d.RetryCount = flags.Int("awsec2-retries")
+	d.OpenPorts = flags.StringSlice("awsec2-open-port")
+	d.UserDataFile = flags.String("awsec2-userdata")
+	d.UserData = flags.String("awsec2-userdata-base64")
 
-	d.DisableSSL = flags.Bool("amazonec2-insecure-transport")
+	d.DisableSSL = flags.Bool("awsec2-insecure-transport")
 
 	if d.DisableSSL && d.Endpoint == "" {
 		return errorDisableSSLWithoutCustomEndpoint
