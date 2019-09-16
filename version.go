@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Globo.com
  * All rights reserved.
  *
- * This source is subject to the Apache License, Version 2.0.
+ * This source is subject to the Apache License 2.0.
  * Please see the LICENSE file for more information.
  *
  * Authors: See AUTHORS file
