@@ -726,11 +726,19 @@ func (d *Driver) innerCreate() error {
 		if err != nil {
 			return fmt.Errorf("Error resolving spot instance to real instance: %v", err)
 		}
+
+		log.Debug("Settings tags for instance")
+		err = d.configureTags(d.Tags)
+
+		if err != nil {
+			return fmt.Errorf("Unable to tag instance %s: %s", d.InstanceId, err)
+		}
 	} else {
 		inst, err := d.getClient().RunInstances(&ec2.RunInstancesInput{
-			ImageId:  &d.AMI,
-			MinCount: aws.Int64(1),
-			MaxCount: aws.Int64(1),
+			ImageId:           &d.AMI,
+			TagSpecifications: d.getTagSpecifications(d.Tags),
+			MinCount:          aws.Int64(1),
+			MaxCount:          aws.Int64(1),
 			Placement: &ec2.Placement{
 				AvailabilityZone: &regionZone,
 			},
@@ -752,6 +760,10 @@ func (d *Driver) innerCreate() error {
 		instance = inst.Instances[0]
 	}
 
+	if instance == nil {
+		return fmt.Errorf("Instance is NULL")
+	}
+
 	d.InstanceId = *instance.InstanceId
 
 	log.Debug("waiting for ip address to become available")
@@ -770,13 +782,6 @@ func (d *Driver) innerCreate() error {
 		d.IPAddress,
 		d.PrivateIPAddress,
 	)
-
-	log.Debug("Settings tags for instance")
-	err := d.configureTags(d.Tags)
-
-	if err != nil {
-		return fmt.Errorf("Unable to tag instance %s: %s", d.InstanceId, err)
-	}
 
 	return nil
 }
@@ -1060,6 +1065,33 @@ func (d *Driver) securityGroupAvailableFunc(id string) func() bool {
 		log.Debug(err)
 		return false
 	}
+}
+
+func (d *Driver) getTagSpecifications(tagGroups string) []*ec2.TagSpecification {
+
+	tags := []*ec2.Tag{}
+	tags = append(tags, &ec2.Tag{
+		Key:   aws.String("Name"),
+		Value: &d.MachineName,
+	})
+
+	if tagGroups != "" {
+		t := strings.Split(tagGroups, ",")
+		if len(t) > 0 && len(t)%2 != 0 {
+			log.Warnf("Tags are not key value in pairs. %d elements found", len(t))
+		}
+		for i := 0; i < len(t)-1; i += 2 {
+			tags = append(tags, &ec2.Tag{
+				Key:   &t[i],
+				Value: &t[i+1],
+			})
+		}
+	}
+
+	var tagsSpecifications []*ec2.TagSpecification
+	tagsSpecifications = append(tagsSpecifications, &ec2.TagSpecification{ResourceType: aws.String("instance"), Tags: tags})
+
+	return tagsSpecifications
 }
 
 func (d *Driver) configureTags(tagGroups string) error {
