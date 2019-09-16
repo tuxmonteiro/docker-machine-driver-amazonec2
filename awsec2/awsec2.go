@@ -616,10 +616,12 @@ func (d *Driver) innerCreate() error {
 		return err
 	}
 
-	if b64, err := d.Base64UserData(); err != nil {
-		return err
-	} else {
-		d.UserData = b64
+	if d.UserDataFile != "" {
+		if b64, err := d.Base64UserData(); err != nil {
+			return err
+		} else {
+			d.UserData = b64
+		}
 	}
 
 	bdm := &ec2.BlockDeviceMapping{
