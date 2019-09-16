@@ -143,6 +143,7 @@ type Driver struct {
 	DisableSSL              bool
 	UserDataFile            string
 	UserData                string
+	DelayToLaunch           int64
 
 	spotInstanceRequestId string
 }
@@ -322,6 +323,11 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Usage:  "Cloud-init User data Base64 (ignored if awsec2-userdata is defined)",
 			EnvVar: "AWS_USERDATA_BASE64",
 		},
+		mcnflag.IntFlag{
+			Name:  "awsec2-delay-to-launch",
+			Usage: "Set delay to instance launch (useful to waiting userdata)",
+			Value: 0,
+		},
 	}
 }
 
@@ -421,6 +427,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.OpenPorts = flags.StringSlice("awsec2-open-port")
 	d.UserDataFile = flags.String("awsec2-userdata")
 	d.UserData = flags.String("awsec2-userdata-base64")
+	d.DelayToLaunch = int64(flags.Int("awsec2-delay-to-launch"))
 
 	d.DisableSSL = flags.Bool("awsec2-insecure-transport")
 
@@ -782,6 +789,8 @@ func (d *Driver) innerCreate() error {
 		d.IPAddress,
 		d.PrivateIPAddress,
 	)
+
+	time.Sleep(time.Duration(d.DelayToLaunch) * time.Second)
 
 	return nil
 }
