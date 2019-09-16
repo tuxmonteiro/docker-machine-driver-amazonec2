@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 Globo.com
+ * Copyright (c) 2019 Globo.com
  * All rights reserved.
  *
  * This source is subject to the Apache License, Version 2.0.
