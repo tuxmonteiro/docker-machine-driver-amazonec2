@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-package awsec2
+package amazonec2
 
-const Version string = "v0.0.1-tks3"
+const Version string = "v0.0.1-tks1"

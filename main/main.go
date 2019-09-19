@@ -18,9 +18,9 @@ package main
 
 import (
 	"github.com/docker/machine/libmachine/drivers/plugin"
-	"github.com/tuxmonteiro/docker-machine-driver-awsec2/awsec2"
+	"github.com/tuxmonteiro/docker-machine-driver-amazonec2/amazonec2"
 )
 
 func main() {
-	plugin.RegisterDriver(awsec2.NewDriver("", ""))
+	plugin.RegisterDriver(amazonec2.NewDriver("", ""))
 }

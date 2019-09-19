@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package awsec2
+package amazonec2
 
 import (
 	"testing"
